@@ -1,0 +1,16 @@
+# Hygiene only (no external incident on record for this file) — personal/local artifacts that
+# should never reach a shared repo. settings.local.json in particular: see CVE-2026-21852
+# (ANTHROPIC_BASE_URL API-key leak) in CLAUDE.md's safety section.
+.claude/settings.local.json
+.env
+.env.local
+.DS_Store
+
+# Сборка и зависимости (этот проект)
+node_modules/
+dist/
+
+# Playwright (этот проект)
+test-results/
+playwright-report/
+blob-report/
