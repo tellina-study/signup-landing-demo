@@ -1,0 +1,18 @@
+{
+  "$comment": "TEMPLATE FILE — read this variant's own top-level README.md before editing. This hook blocks a Claude Code session from committing directly to main/master. It is git-tracked, so it is live automatically in every fresh clone/worktree of this project — no manual install step, unlike a real .git/hooks/pre-commit (which requires a per-checkout `cp` and reliably lags days-to-never behind bootstrap). Two edge cases, both handled explicitly rather than left to fail open: (1) a brand-new repo's unborn HEAD, before any commit exists — `git rev-parse --abbrev-ref HEAD` errors on this and would leave the branch check silently unable to fire; fixed by using `git symbolic-ref --short HEAD` instead, which resolves the branch name correctly in both the unborn and normal case. (2) this project isn't a git repository at all yet (e.g. this variant was copied into a plain folder before `git init` ran) — rather than silently allow (the gate simply can't reason about branches with no repo, so doing nothing would look like protection while providing none), this asks for explicit confirmation with a visible warning instead, on the principle that a gate whose failure mode is silent is not proven until it's been made to fail loudly. Extend the same PreToolUse array with further checks (e.g. a review-artifact-required-before-merge gate) as this project's own workflow needs them -- APPEND them rather than prepending, because .claude/hooks/selftest-branch-guard.sh reads the first \"Bash\"-matcher group and would otherwise report a confusing red against a perfectly good gate; each new BINDING rule you add here should ship with this kind of mechanical check in the same change, or be labeled advisory instead. Known sharp edge, confirmed live in dogfooding: this check reads the branch you're on BEFORE the whole Bash command runs, so `git switch feature-x && git commit ...` in one call is denied against your old branch even though the commit would have landed correctly on the new one after the switch — run the switch as its own command first (see CLAUDE.md's repository-etiquette section).",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command' | { read -r cmd; if echo \"$cmd\" | grep -qE '(^|[;&|]\\s*)git\\s+commit\\b'; then if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"ask\",\"permissionDecisionReason\":\"WARNING: branch-protection gate inactive \\u2014 this is not a git repository yet (no .git found), so this hook cannot check anything. Run git init before your first commit if you want main/master protection; proceeding now commits with no branch discipline in effect.\"}}'; exit 0; fi; branch=$(git symbolic-ref --short HEAD 2>/dev/null); if [ \"$branch\" = \"main\" ] || [ \"$branch\" = \"master\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"BLOCKED: direct commit to main/master. Create a feature branch first.\"}}'; exit 0; fi; fi; }",
+            "timeout": 10,
+            "statusMessage": "Checking branch before allowing commit..."
+          }
+        ]
+      }
+    ]
+  }
+}
