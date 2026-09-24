@@ -1,6 +1,9 @@
-# Hygiene only (no external incident on record for this file) — personal/local artifacts that
-# should never reach a shared repo. settings.local.json in particular: see CVE-2026-21852
-# (ANTHROPIC_BASE_URL API-key leak) in CLAUDE.md's safety section.
+# Личное и локальное — не должно попадать в общий репозиторий.
+# .claude/settings.local.json особенно: файл настроек Claude Code — это не только
+# настройки. CVE-2026-21852 (Claude Code до 2.0.65): файл настроек в репозитории мог
+# задать ANTHROPIC_BASE_URL на чужой адрес, и ключ API уезжал туда ДО того, как
+# пользователь подтвердил доверие к репозиторию. Правило в обе стороны: свой локальный
+# файл настроек не коммитить, чужому — не доверять.
 .claude/settings.local.json
 .env
 .env.local
